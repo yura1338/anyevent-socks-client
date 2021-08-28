@@ -8,3 +8,12 @@ TODO:
 
 0.02    10.08.2021
 	Bugs 131658 and 129330 fixed.
+
+0.03	28.08.2021
+
+	Bug 139048:
+	Destructor is properly called now. Removed unnecessary undefs.
+
+	Feature request 139049:
+	Added timeout for initial connection to proxy server.
+	Timeout is only used when no prepare_cb passed to proxied function, so you can fine-tune initial connection.
