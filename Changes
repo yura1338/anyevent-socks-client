@@ -1,8 +1,5 @@
 Revision history for AnyEvent-SOCKS-Client
 
-TODO:
-* SOCKS4 support
-
 0.01    08.03.2018
         First version, released on an unsuspecting world.
 
@@ -23,3 +20,7 @@ TODO:
 
 	TYPE_IP4 and TYPE_IP6 in connect_cmd because IP6 doesn't work as FQDN.
 	It's only used when host is already valid IP4 or IP6 address (no local DNS resolution).
+
+0.04	28.08.2021
+
+	SOCKS4/4a support

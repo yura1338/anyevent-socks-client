@@ -4,7 +4,7 @@ AnyEvent::SOCKS::Client - AnyEvent-based SOCKS client!
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
@@ -63,7 +63,7 @@ use AnyEvent::Handle ;
 use AnyEvent::Log ;
 
 require Exporter;
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 our @ISA = qw/Exporter/;
 our @EXPORT_OK = qw/tcp_connect_via/;
 
@@ -134,8 +134,44 @@ sub connect{
 				$c_cb->();
 			}
 		);
+		if($that->{v} =~ /4a?/){
+			$self->connect_socks4;
+			return;
+		}
 		$self->handshake;
 	}, $pre_cb || sub{ $TIMEOUT };
+}
+
+sub connect_socks4{
+	my( $self ) = @_;
+	my( $that, $next ) = @{ $self->{chain} } ;
+	my( $host, $port ) = $next 
+		? ( $next->{host}, $next->{port} )
+		: ( $self->{dst_host}, $self->{dst_port} ) ;
+
+	my $ip4 = parse_ipv4($host);
+	if( $that->{v} eq '4' and not $ip4 ){
+		AE::log "error" => "SOCKS4 is only support IPv4 addresses: $host given";
+		return;
+	}
+
+	if( $host =~ /:/ ){
+		AE::log "error" => "SOCKS4/4a doesn't support IPv6 addresses: $host given";
+		return;
+	}
+
+	$self->{hd}->push_write( $ip4 
+		? pack('CCnA4A2', 4, CMD_CONNECT, $port, $ip4, "X\0" )
+		: pack('CCnCCCCA*', 4, CMD_CONNECT, $port, 0,0,0,7 , "X\0$host\0" )
+	);
+	$self->{hd}->push_read( chunk => 8, sub{
+		my($code, $dst_port, $dst_ip) = unpack('xCna4', $_[1]);
+		unless( $code == 90 ){
+			AE::log "error" => "SOCKS4/4a request rejected: code is $code";
+			return;
+		}
+		$self->socks_connect_done( format_ipv4( $dst_ip ), $dst_port );
+	});
 }
 
 sub handshake{
@@ -256,7 +292,7 @@ sub socks_connect_done{
 	my( $self, $bind_host, $bind_port ) = @_; 
 
 	my $that = shift @{ $self->{chain} }; # shift = move forward in chain
-	AE::log "debug" => "Done with server $that->{host}:$that->{port} , bound to $bind_host:$bind_port";
+	AE::log "debug" => "Done with server socks$that->{v}://$that->{host}:$that->{port} , bound to $bind_host:$bind_port";
 
 	if( @{ $self->{chain} } ){
 		$self->handshake ;
