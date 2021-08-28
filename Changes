@@ -17,3 +17,6 @@ TODO:
 	Feature request 139049:
 	Added timeout for initial connection to proxy server.
 	Timeout is only used when no prepare_cb passed to proxied function, so you can fine-tune initial connection.
+
+	TYPE_IP4 and TYPE_IP6 in connect_cmd because IP6 doesn't work as FQDN.
+	It's only used when host is already valid IP4 or IP6 address (no local DNS resolution).

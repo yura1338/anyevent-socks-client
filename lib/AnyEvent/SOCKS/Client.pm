@@ -58,7 +58,7 @@ use strict ;
 
 use AnyEvent;
 use AnyEvent::Util qw/guard/;
-use AnyEvent::Socket qw/tcp_connect format_ipv4 format_ipv6/;
+use AnyEvent::Socket qw/tcp_connect parse_ipv4 format_ipv4 parse_ipv6 format_ipv6/;
 use AnyEvent::Handle ;
 use AnyEvent::Log ;
 
@@ -191,9 +191,21 @@ sub connect_cmd{
 		? ( $next->{host}, $next->{port} )
 		: ( $self->{dst_host}, $self->{dst_port} ) ;
 
-	$self->{hd}->push_write( 
-		pack('CCCCC', 5, CMD_CONNECT, 0, TYPE_FQDN , length $host ) . $host . pack( 'n', $port)
-	);
+	my ($cmd, $ip );
+	if( $ip = parse_ipv4($host) ){
+		AE::log "debug" => "Connect IPv4: $host";
+		$cmd = pack('CCCCA4n', 5, CMD_CONNECT, 0, TYPE_IP4, $ip, $port);
+	}
+	elsif( $ip = parse_ipv6($host) ){
+		AE::log "debug" => "Connect IPv6: $host";
+		$cmd = pack('CCCCA16n', 5, CMD_CONNECT, 0, TYPE_IP6, $ip, $port);
+	}
+	else{
+		AE::log "debug" => "Connect hostname: $host";
+		$cmd = pack('CCCCCA*n', 5, CMD_CONNECT, 0, TYPE_FQDN , length $host, $host, $port);
+	}
+
+	$self->{hd}->push_write( $cmd );
 	$self->{hd}->push_read( chunk => 4, sub{
 		my( $status, $type ) = unpack( 'xCxC', $_[1] );
 		unless( $status == 0 ){
