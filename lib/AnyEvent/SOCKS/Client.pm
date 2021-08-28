@@ -87,7 +87,9 @@ use constant {
 sub _parse_uri{
 	my $re = qr!socks(4|4a|5)://(?:([^\s:]+):([^\s@]*)@)?(\[[0-9a-f:.]+\]|[^\s:]+):(\d+)!i ;
 	if( $_[0] =~ m/$re/gi ){
-		return {v => $1, login => $2, password => $3, host => $4, port => $5};
+		my $p = {v => $1, login => $2, password => $3, host => $4, port => $5};
+		$p->{host} =~ s/^\[|\]$//g;
+		return $p;
 	}
 	undef ;
 }
@@ -114,7 +116,7 @@ sub connect{
 	$self->{dst_host} = $dst_host; 
 	$self->{dst_port} = $dst_port;
 	$self->{c_cb} = $c_cb ;
-	
+
 	# tcp connect to first socks
 	my $that = $self->{chain}->[0] ;
 	return tcp_connect $that->{host}, $that->{port}, sub{

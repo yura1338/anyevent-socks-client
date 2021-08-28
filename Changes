@@ -12,7 +12,10 @@ TODO:
 0.03	28.08.2021
 
 	Bug 139048:
-	Destructor is properly called now. Removed unnecessary undefs.
+	Destructor is properly called now. Removed unnecessary undefs. Likely fixed.
+
+	Bug 139050:
+	Added sq. brackets trimming to _parse_uri, likely fixed.
 
 	Feature request 139049:
 	Added timeout for initial connection to proxy server.
