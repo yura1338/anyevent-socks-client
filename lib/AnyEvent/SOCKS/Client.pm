@@ -4,7 +4,7 @@ AnyEvent::SOCKS::Client - AnyEvent-based SOCKS client!
 
 =head1 VERSION
 
-Version 0.05
+Version 0.051
 
 =cut
 
@@ -65,7 +65,7 @@ use AnyEvent::Log ;
 use Scalar::Util qw/weaken/;
 
 require Exporter;
-our $VERSION = '0.05';
+our $VERSION = '0.051';
 our @ISA = qw/Exporter/;
 our @EXPORT_OK = qw/tcp_connect_via/;
 
@@ -123,11 +123,14 @@ sub tcp_connect_via{
 		}, __PACKAGE__ ;
 		$con->connect;
 
-		if( defined wantarray and not wantarray ){ # scalar
+		if( defined wantarray ){ # not void
 			weaken( $con );
 			return guard{
 				AE::log "debug" => "Guard triggered" ;
-				$con->DESTROY if( ref $con eq __PACKAGE__ );
+				if( ref $con eq __PACKAGE__ ){
+					undef $con->{c_cb};
+					$con->DESTROY;
+				}
 			};
 		}
 		undef;

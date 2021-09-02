@@ -1,5 +1,10 @@
 Revision history for AnyEvent-SOCKS-Client
 
+0.051	2.09.2021
+
+	Guard must not trigger c_cb.
+	Guard is returned in any non-void context instead of scalar only.
+
 0.05	2.09.2021
 
 	Bugs 139048, 139162, 139160:
